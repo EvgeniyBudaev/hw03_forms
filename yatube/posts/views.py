@@ -27,7 +27,20 @@ def group_posts(request, slug):
 
 
 def profile(request, username):
-    return render(request, 'profile.html', {})
+    user_req = get_object_or_404(User, username=username)
+    posts = user_req.posts.all()
+    paginator = Paginator(posts, 10)
+    page_number = request.GET.get("page")
+    page = paginator.get_page(page_number)
+    return render(
+        request,
+        "profile.html",
+        {
+            "user_req": user_req,
+            "page": page,
+            "paginator": paginator
+        }
+    )
 
 
 def post_view(request, username, post_id):
