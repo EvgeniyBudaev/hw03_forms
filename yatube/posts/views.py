@@ -14,7 +14,7 @@ def index(request):
     page_number = request.GET.get('page')
     page = paginator.get_page(page_number)
     current_year = dt.datetime.now().year
-    return render(request, "index.html", {"page": page, "year": current_year})
+    return render(request, "posts/index.html", {"page": page, "year": current_year})
 
 
 def group_posts(request, slug):
@@ -23,62 +23,72 @@ def group_posts(request, slug):
     paginator = Paginator(posts_list, 10)
     page_number = request.GET.get('page')
     page = paginator.get_page(page_number)
-    return render(request, "group.html", {"group": group, "page": page})
+    return render(request, "posts/group.html", {"group": group, "page": page})
 
 
 def profile(request, username):
-    user_req = get_object_or_404(User, username=username)
-    posts = user_req.posts.all()
+    author = get_object_or_404(User, username=username)
+    posts = author.posts.all().order_by("-pub_date")
     paginator = Paginator(posts, 10)
-    page_number = request.GET.get("page")
+    page_number = request.GET.get('page')
     page = paginator.get_page(page_number)
-    return render(
-        request,
-        "profile.html",
-        {
-            "user_req": user_req,
-            "page": page,
-            "paginator": paginator
-        }
-    )
+
+    context = {
+        'page': page,
+        'author': author,
+        "posts_count": author.posts.count()
+    }
+
+    return render(request, 'posts/profile.html', context)
 
 
 def post_view(request, username, post_id):
-    # тут тело функции
-    return render(request, 'post.html', {})
+    post = get_object_or_404(Post, author__username=username, pk=post_id)
+
+    context = {
+        "post": post,
+        "author": post.author,
+        "posts_count": post.author.posts.count()
+    }
+
+    return render(request, 'posts/post.html', context)
 
 
 @login_required
 def new_post(request):
     if request.method == "POST":
-        form = PostForm(data=request.POST)
+        form = PostForm(request.POST)
         if form.is_valid():
             post = form.save(commit=False)
             post.author = request.user
             post.save()
             return redirect("index")
-        return render(request, "new_post.html", {"form": form})
     form = PostForm()
-    return render(request, "new_post.html", {"form": form})
+
+    context = {
+        "form": form,
+    }
+
+    return render(request, "posts/new_post.html", context)
 
 
+@login_required
 def post_edit(request, username, post_id):
-    edit_post = get_object_or_404(Post, pk=post_id)
-    if edit_post.author == request.user:
-        if request.method == "POST":
-            form = PostForm(request.POST, files=request.FILES or None, instance=edit_post)
-            if form.is_valid():
-                form.save()
-                return redirect("post", username, post_id)
-        form = PostForm(instance=edit_post)
-        return render(
-            request,
-            "new_post.html",
-            {
-                "form": form,
-                "username": username,
-                "post_id": post_id,
-                "edit_post": edit_post
-            }
-        )
-    return redirect("post", username, post_id)
+    post = get_object_or_404(Post, author__username=username, pk=post_id)
+
+    if request.user == post.author:
+        form = PostForm(instance=post, data=request.POST or None)
+
+        if form.is_valid():
+            form.save()
+
+            return redirect('post', username=username, post_id=post_id)
+
+        context = {
+            'form': form,
+        }
+
+        return render(request, 'posts/post_edit.html', context)
+
+    else:
+        return redirect('post', username=username, post_id=post_id)
