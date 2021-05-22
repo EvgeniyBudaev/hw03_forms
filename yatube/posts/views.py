@@ -14,7 +14,8 @@ def index(request):
     page_number = request.GET.get('page')
     page = paginator.get_page(page_number)
     current_year = dt.datetime.now().year
-    return render(request, "posts/index.html", {"page": page, "year": current_year})
+    return render(request, "posts/index.html",
+                  {"page": page, "year": current_year})
 
 
 def group_posts(request, slug):
