@@ -1,12 +1,20 @@
-from django import forms
+from django.forms import ModelForm
+
 from .models import Post
 
 
-class PostForm(forms.ModelForm):
+class PostForm(ModelForm):
     class Meta:
         model = Post
-        fields = ["text", "group"]
-        widgets = {
-            "text": forms.Textarea(attrs={"class": "form-control", "rows": 5}),
-            "group": forms.Select(attrs={"class": "form-control"})
+
+        fields = ('group', 'text')
+
+        labels = {
+            'group': ('Группа'),
+            'text': ('Текст')
+        }
+
+        help_texts = {
+            'group': ('Выберите группу для новой записи'),
+            'text': ('Добавьте текст для новой записи')
         }
