@@ -143,4 +143,5 @@ dmypy.json
 # Local History for Visual Studio Code
 .history/
 
-.mypy_cache
+.mypy_cacheyatube/sent_emails/
+yatube/sent_emails/
